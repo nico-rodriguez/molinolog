@@ -32,11 +32,12 @@ borrar_variables_globales() :-
     retractall(fase(_)), % <- Variable global con la fase actual del juego
     retractall(ficha(_,_,_)),
     retractall(colocar_fichas_restantes(_,_)).
-borrar_variables_globales().
+% borrar_variables_globales().
 
 inicializar_variables_globales(T) :-
     assert(fase(colocar)),
-    Fichas is 3*(T+1),
+    % Fichas is 3*(T+1),
+    Fichas is 2,
     % Variables globales con las fichas que cada jugador les resta colocar
     assert(colocar_fichas_restantes(negro,Fichas)),
     assert(colocar_fichas_restantes(blanco,Fichas)).
@@ -77,6 +78,16 @@ evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     \+ posicion_libre(Dir,Dist),
     !,
     loop(Visual,Turno,JugadorNegro,JugadorBlanco,T).
+evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
+    fase(mover),
+    posicion_ocupada(Turno,Dir,Dist),
+    !,
+    mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T).
+evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
+    fase(mover),
+    \+ posicion_ocupada(Turno,Dir,Dist),
+    !,
+    loop(Visual,Turno,JugadorNegro,JugadorBlanco,T).
 evento(salir,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     (   gr_opciones(Visual, '¿Seguro?', ['Sí', 'No'], 'Sí')
 	->  halt
@@ -94,12 +105,22 @@ mensaje(Visual,Turno) :-
     colocar_fichas_restantes(Turno,Fichas),
     sformat(Msg, 'Jugador ~w, colocar ~D fichas', [Turno,Fichas]),
     gr_estado(Visual, Msg).
+mensaje(Visual,Turno) :-
+    fase(mover),
+    sformat(Msg, 'Jugador ~w, mover', [Turno]),
+    gr_estado(Visual, Msg).
 
 colocar_ficha(Dir,Dist,Visual,Turno,_,_,T) :-
     assert(ficha(Turno,Dir,Dist)),
     retract(colocar_fichas_restantes(Turno,Fichas)),
     Fichas1 is Fichas-1,
     assert(colocar_fichas_restantes(Turno,Fichas1)),
+    contrincante(Turno,Contrincante),
+    clause(colocar_fichas_restantes(Contrincante,FichasContrincante),true),
+    (   (Fichas1 == 0,FichasContrincante == 0)
+    -> (retract(fase(colocar)),assert(fase(mover)),retractall(colocar_fichas_restantes(_,_)))
+    ;   true
+    ),
     gr_ficha(Visual,T,Dir,Dist,Turno),
     chequear_molino(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T).
 
@@ -173,8 +194,25 @@ capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
 capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T).
 
+mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
+    % sformat(Msg,'Jugador ~w, mover',[Turno]),
+    % gr_estado(Visual,Msg),
+    gr_ficha(Visual,T,Dir,Dist,'seleccion'),
+    retract(ficha(Turno,Dir,Dist)),
+    gr_evento(Visual,click(NewDir,NewDist)),
+    posicion_libre(NewDir,NewDist),
+    !,
+    assert(ficha(Turno,NewDir,NewDist)),
+    findall(ficha(Color1,Dir1,Dist1),clause(ficha(Color1,Dir1,Dist1),true),ListaFichas),
+    gr_dibujar_tablero(Visual,T,ListaFichas).
+mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
+    mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T).
+
 posicion_libre(Dir,Dist) :-
     \+ clause(ficha(_,Dir,Dist),true).
+
+% posicion_adyacente(Dir,Dist,AdyDir,AdyDist) :-
+
 
 posicion_ocupada(Jugador,Dir,Dist) :-
     clause(ficha(Jugador,Dir,Dist),true).
