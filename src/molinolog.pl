@@ -109,7 +109,11 @@ chequear_molino(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
             MolinosNuevos),
     length(MolinosNuevos,N),
     (   N > 0
-    ->  capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T)
+    ->  [[ficha(_,Dir11,Dist11),ficha(_,Dir12,Dist12),ficha(_,Dir13,Dist13)]|_] = MolinosNuevos,
+        gr_ficha(Visual,T,Dir11,Dist11,'seleccion'),
+        gr_ficha(Visual,T,Dir12,Dist12,'seleccion'),
+        gr_ficha(Visual,T,Dir13,Dist13,'seleccion'),
+        capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T)
     ;   true
     ).
 
