@@ -204,14 +204,15 @@ mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     !,
     assert(ficha(Turno,NewDir,NewDist)),
     findall(ficha(Color1,Dir1,Dist1),clause(ficha(Color1,Dir1,Dist1),true),ListaFichas),
-    gr_dibujar_tablero(Visual,T,ListaFichas).
+    gr_dibujar_tablero(Visual,T,ListaFichas),
+    chequear_molino(NewDir,NewDist,Visual,Turno,JugadorNegro,JugadorBlanco,T).
 mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T).
 
 posicion_libre(Dir,Dist) :-
     \+ clause(ficha(_,Dir,Dist),true).
 
-% posicion_adyacente(Dir,Dist,AdyDir,AdyDist) :-
+% posicion_adyacente(Dir,Dist,AdyDir,AdyDist) :- 
 
 
 posicion_ocupada(Jugador,Dir,Dist) :-
