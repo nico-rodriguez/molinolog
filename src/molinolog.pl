@@ -89,11 +89,11 @@ handle_click(Dir,Dist,Visual,Turno,_,_,T) :-
     Fichas1 is Fichas-1,
     assert(colocar_fichas(Turno,Fichas1)),
     gr_ficha(Visual,T,Dir,Dist,Turno),
-    chequear_molino(Dir,Dist,Visual,Turno).
+    chequear_molino(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T).
 handle_click(_,_,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     loop(Visual,Turno,JugadorNegro,JugadorBlanco,T).
 
-chequear_molino(Dir,Dist,Visual,Turno) :-
+chequear_molino(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     findall([ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)],
             (member(ficha(Turno,Dir,Dist),[ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)]),molino(ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3))),
             MolinosNuevos),
