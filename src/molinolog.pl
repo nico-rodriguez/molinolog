@@ -200,6 +200,7 @@ mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     gr_ficha(Visual,T,Dir,Dist,'seleccion'),
     retract(ficha(Turno,Dir,Dist)),
     gr_evento(Visual,click(NewDir,NewDist)),
+    posicion_adyacente(Dir,Dist,NewDir,NewDist,T),
     posicion_libre(NewDir,NewDist),
     !,
     assert(ficha(Turno,NewDir,NewDist)),
@@ -212,8 +213,37 @@ mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
 posicion_libre(Dir,Dist) :-
     \+ clause(ficha(_,Dir,Dist),true).
 
-% posicion_adyacente(Dir,Dist,AdyDir,AdyDist) :- 
-
+posicion_adyacente(Dir,Dist,Dir,AdyDist,T) :-
+    member(Dir,[w,e,n,s]),
+    Dist is T+1,
+    AdyDist is Dist-1.
+posicion_adyacente(Dir,1,Dir,AdyDist,T) :-
+    member(Dir,[w,e,n,s]),
+    AdyDist is 2.
+posicion_adyacente(Dir,Dist,Dir,AdyDist,T) :-
+    member(Dir,[w,e,n,s]),
+    Dist > 1, Dist < T+1,
+    AdyDist is Dist-1.
+posicion_adyacente(Dir,Dist,Dir,AdyDist,T) :-
+    member(Dir,[w,e,n,s]),
+    Dist > 1, Dist < T+1,
+    AdyDist is Dist+1.
+posicion_adyacente(w,Dist,nw,Dist,_).
+posicion_adyacente(w,Dist,sw,Dist,_).
+posicion_adyacente(n,Dist,nw,Dist,_).
+posicion_adyacente(n,Dist,ne,Dist,_).
+posicion_adyacente(e,Dist,ne,Dist,_).
+posicion_adyacente(e,Dist,se,Dist,_).
+posicion_adyacente(s,Dist,sw,Dist,_).
+posicion_adyacente(s,Dist,se,Dist,_).
+posicion_adyacente(nw,Dist,w,Dist,_).
+posicion_adyacente(nw,Dist,n,Dist,_).
+posicion_adyacente(ne,Dist,n,Dist,_).
+posicion_adyacente(ne,Dist,e,Dist,_).
+posicion_adyacente(se,Dist,s,Dist,_).
+posicion_adyacente(se,Dist,e,Dist,_).
+posicion_adyacente(sw,Dist,w,Dist,_).
+posicion_adyacente(sw,Dist,s,Dist,_).
 
 posicion_ocupada(Jugador,Dir,Dist) :-
     clause(ficha(Jugador,Dir,Dist),true).
