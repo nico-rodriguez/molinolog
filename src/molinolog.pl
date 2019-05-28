@@ -141,44 +141,36 @@ chequear_molino(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
 molino(ficha(Turno,nw,N),ficha(Turno,n,N),ficha(Turno,ne,N)) :-
     clause(ficha(Turno,nw,N),true),
     clause(ficha(Turno,n,N),true),
-    clause(ficha(Turno,ne,N),true),
-    !.
+    clause(ficha(Turno,ne,N),true).
 molino(ficha(Turno,w,3),ficha(Turno,w,2),ficha(Turno,w,1)) :-
     clause(ficha(Turno,w,3),true),
     clause(ficha(Turno,w,2),true),
-    clause(ficha(Turno,w,1),true),
-    !.
+    clause(ficha(Turno,w,1),true).
 molino(ficha(Turno,e,1),ficha(Turno,e,2),ficha(Turno,e,3)) :-
     clause(ficha(Turno,e,1),true),
     clause(ficha(Turno,e,2),true),
-    clause(ficha(Turno,e,3),true),
-    !.
+    clause(ficha(Turno,e,3),true).
 molino(ficha(Turno,sw,N),ficha(Turno,s,N),ficha(Turno,se,N)) :-
     clause(ficha(Turno,sw,N),true),
     clause(ficha(Turno,s,N),true),
-    clause(ficha(Turno,se,N),true),
-    !.
+    clause(ficha(Turno,se,N),true).
 % Molinos verticales
 molino(ficha(Turno,nw,N),ficha(Turno,w,N),ficha(Turno,sw,N)) :-
     clause(ficha(Turno,nw,N),true),
     clause(ficha(Turno,w,N),true),
-    clause(ficha(Turno,sw,N),true),
-    !.
+    clause(ficha(Turno,sw,N),true).
 molino(ficha(Turno,n,3),ficha(Turno,n,2),ficha(Turno,n,1)) :-
     clause(ficha(Turno,n,3),true),
     clause(ficha(Turno,n,2),true),
-    clause(ficha(Turno,n,1),true),
-    !.
+    clause(ficha(Turno,n,1),true).
 molino(ficha(Turno,s,1),ficha(Turno,s,2),ficha(Turno,s,3)) :-
     clause(ficha(Turno,s,1),true),
     clause(ficha(Turno,s,2),true),
-    clause(ficha(Turno,s,3),true),
-    !.
+    clause(ficha(Turno,s,3),true).
 molino(ficha(Turno,ne,N),ficha(Turno,e,N),ficha(Turno,se,N)) :-
     clause(ficha(Turno,ne,N),true),
     clause(ficha(Turno,e,N),true),
-    clause(ficha(Turno,se,N),true),
-    !.
+    clause(ficha(Turno,se,N),true).
 
 capturar_ficha(Visual,Turno,_,_,T) :-
     sformat(Msg,'Jugador ~w, capturar',[Turno]),
