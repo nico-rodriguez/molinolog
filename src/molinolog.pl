@@ -36,8 +36,7 @@ borrar_variables_globales() :-
 
 inicializar_variables_globales(T) :-
     assert(fase(colocar)),
-    % Fichas is 3*(T+1),
-    Fichas is 2,
+    Fichas is 3*(T+1),
     % Variables globales con las fichas que cada jugador les resta colocar
     assert(colocar_fichas_restantes(negro,Fichas)),
     assert(colocar_fichas_restantes(blanco,Fichas)).
@@ -110,7 +109,7 @@ mensaje(Visual,Turno) :-
     sformat(Msg, 'Jugador ~w, mover', [Turno]),
     gr_estado(Visual, Msg).
 
-colocar_ficha(Dir,Dist,Visual,Turno,_,_,T) :-
+colocar_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     assert(ficha(Turno,Dir,Dist)),
     retract(colocar_fichas_restantes(Turno,Fichas)),
     Fichas1 is Fichas-1,
@@ -181,7 +180,7 @@ molino(ficha(Turno,ne,N),ficha(Turno,e,N),ficha(Turno,se,N)) :-
     clause(ficha(Turno,se,N),true),
     !.
 
-capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
+capturar_ficha(Visual,Turno,_,_,T) :-
     sformat(Msg,'Jugador ~w, capturar',[Turno]),
     gr_estado(Visual,Msg),
     gr_evento(Visual,click(Dir,Dist)),
@@ -195,8 +194,6 @@ capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T).
 
 mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
-    % sformat(Msg,'Jugador ~w, mover',[Turno]),
-    % gr_estado(Visual,Msg),
     gr_ficha(Visual,T,Dir,Dist,'seleccion'),
     retract(ficha(Turno,Dir,Dist)),
     gr_evento(Visual,click(NewDir,NewDist)),
@@ -217,7 +214,7 @@ posicion_adyacente(Dir,Dist,Dir,AdyDist,T) :-
     member(Dir,[w,e,n,s]),
     Dist is T+1,
     AdyDist is Dist-1.
-posicion_adyacente(Dir,1,Dir,AdyDist,T) :-
+posicion_adyacente(Dir,1,Dir,AdyDist,_) :-
     member(Dir,[w,e,n,s]),
     AdyDist is 2.
 posicion_adyacente(Dir,Dist,Dir,AdyDist,T) :-
