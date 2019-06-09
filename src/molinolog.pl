@@ -187,11 +187,11 @@ capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
 
 mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     gr_ficha(Visual,T,Dir,Dist,'seleccion'),
-    retract(ficha(Turno,Dir,Dist)),
     gr_evento(Visual,click(NewDir,NewDist)),
     posicion_adyacente(Dir,Dist,NewDir,NewDist,T),
     posicion_libre(NewDir,NewDist),
     !,
+    retract(ficha(Turno,Dir,Dist)),
     assert(ficha(Turno,NewDir,NewDist)),
     findall(ficha(Color1,Dir1,Dist1),clause(ficha(Color1,Dir1,Dist1),true),ListaFichas),
     gr_dibujar_tablero(Visual,T,ListaFichas),
