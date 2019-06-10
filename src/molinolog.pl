@@ -81,6 +81,7 @@ evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     fase(colocar),
     \+ posicion_libre(Dir,Dist),
     !,
+    gr_mensaje(Visual,'Posicion ocupada, seleccione otra.'),
     loop(Visual,Turno,JugadorNegro,JugadorBlanco,T).
 evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     fase(mover),
@@ -91,6 +92,8 @@ evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     fase(mover),
     \+ posicion_ocupada(Turno,Dir,Dist),
     !,
+    sformat(Msg, 'Debes elegir una ficha color ~w.', [Turno]),
+    gr_mensaje(Visual,Msg),
     loop(Visual,Turno,JugadorNegro,JugadorBlanco,T).
 evento(salir,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     (   gr_opciones(Visual, '¿Seguro?', ['Sí', 'No'], 'Sí')
@@ -191,7 +194,12 @@ capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     gr_estado(Visual,Msg),
     gr_evento(Visual,click(Dir,Dist)),
     contrincante(Turno,Contrincante),
-    posicion_ocupada(Contrincante,Dir,Dist),
+    ( posicion_ocupada(Contrincante,Dir,Dist)
+      -> true
+      ; sformat(Msg2,'Debes seleccionar una ficha color ~w.',[Contrincante]),
+	gr_mensaje(Visual,Msg2),
+	false
+    ),
     !,
     retract(mover_fichas_restantes(Contrincante,Fichas)),
     Fichas1 is Fichas-1,
@@ -206,8 +214,16 @@ capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
 mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     gr_ficha(Visual,T,Dir,Dist,'seleccion'),
     gr_evento(Visual,click(NewDir,NewDist)),
-    posicion_adyacente(Dir,Dist,NewDir,NewDist,T),
-    posicion_libre(NewDir,NewDist),
+    ( posicion_adyacente(Dir,Dist,NewDir,NewDist,T)
+      -> true
+      ; gr_mensaje(Visual,'Debes seleccionar una posicion adyacente.'),
+	false
+    ),
+    ( posicion_libre(NewDir,NewDist)
+      -> true
+      ; gr_mensaje(Visual,'Debes seleccionar una posicion que este libre.'),
+	false
+    ),
     !,
     retract(ficha(Turno,Dir,Dist)),
     assert(ficha(Turno,NewDir,NewDist)),
