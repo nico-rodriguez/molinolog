@@ -37,6 +37,7 @@ borrar_variables_globales() :-
     retractall(mover_fichas_restantes(_,_)).
 % borrar_variables_globales().
 
+% inicializar_variables_globales(+T)
 inicializar_variables_globales(T) :-
     assert(fase(colocar)),
     Fichas is 3*(T+1),
@@ -65,6 +66,7 @@ loop(Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     contrincante(Turno,SiguienteTurno),
     loop(Visual,SiguienteTurno,JugadorNegro,JugadorBlanco,T).
 
+% jugar_turno(+Visual,+Turno,+JugadorNegro,+JugadorBlanco,+T)
 jugar_turno(Visual,negro,humano,JugadorBlanco,T) :-
     gr_evento(Visual,E),
     evento(E,Visual,negro,humano,JugadorBlanco,T).
@@ -72,6 +74,7 @@ jugar_turno(Visual,blanco,JugadorNegro,humano,T) :-
     gr_evento(Visual,E),
     evento(E,Visual,blanco,JugadorNegro,humano,T).
 
+% evento(click(+Dir,+Dist),+Visual,+Turno,+JugadorNegro,+JugadorBlanco,+T)
 evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     fase(colocar),
     posicion_libre(Dir,Dist),
@@ -107,6 +110,7 @@ evento(reiniciar,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
 	;   loop(Visual,Turno,JugadorNegro,JugadorBlanco,T)
 	).
 
+% mensaje(+Visual,+Turno)
 mensaje(Visual,Turno) :-
     fase(colocar),
     colocar_fichas_restantes(Turno,Fichas),
@@ -117,6 +121,7 @@ mensaje(Visual,Turno) :-
     sformat(Msg, 'Jugador ~w, mover', [Turno]),
     gr_estado(Visual, Msg).
 
+% colocar_ficha(+Dir,+Dist,+Visual,+Turno,+JugadorNegro,+JugadorBlanco,+T)
 colocar_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     assert(ficha(Turno,Dir,Dist)),
     retract(colocar_fichas_restantes(Turno,Fichas)),
@@ -131,6 +136,7 @@ colocar_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     gr_ficha(Visual,T,Dir,Dist,Turno),
     chequear_molino(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T).
 
+% chequear_molino(+Dir,+Dist,+Visual,+Turno,+JugadorNegro,+JugadorBlanco,+T)
 chequear_molino(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     findall([ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)],
             (member(ficha(Turno,Dir,Dist),[ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)]),molino(ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3),T)),
@@ -145,6 +151,7 @@ chequear_molino(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     ;   true
     ).
 
+% molino(ficha(+Turno,+Dir1,?Dist1),ficha(+Turno,+Dir2,?Dist2),ficha(+Turno,+Dir3,?Dist3),+T)
 % Molinos horizontales
 molino(ficha(Turno,nw,N),ficha(Turno,n,N),ficha(Turno,ne,N),_) :-
     clause(ficha(Turno,nw,N),true),
@@ -192,6 +199,7 @@ molino(ficha(Turno,ne,N),ficha(Turno,e,N),ficha(Turno,se,N),_) :-
     clause(ficha(Turno,e,N),true),
     clause(ficha(Turno,se,N),true).
 
+% verificar_fin(+Fichas,+Turno,+Visual,+JugadorNegro,+JugadorBlanco,+T)
 verificar_fin(2,Turno,Visual,JugadorNegro,JugadorBlanco,T):-
     sformat(Msg, 'Ha ganado el jugador ~w, jugar nuevamente?', [Turno]),
     (   gr_opciones(Visual, Msg, ['Sí', 'No'], 'Sí')
@@ -201,6 +209,7 @@ verificar_fin(2,Turno,Visual,JugadorNegro,JugadorBlanco,T):-
     ).
 verificar_fin(_,_,_,_,_,_).
 
+% capturar_ficha(+Visual,+Turno,+JugadorNegro,+JugadorBlanco,+T)
 capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     sformat(Msg,'Jugador ~w, capturar',[Turno]),
     gr_estado(Visual,Msg),
@@ -223,6 +232,7 @@ capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
 capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T).
 
+% mover_ficha(+Dir,+Dist,+Visual,+Turno,+JugadorNegro,+JugadorBlanco,+T)
 mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     gr_ficha(Visual,T,Dir,Dist,'seleccion'),
     gr_evento(Visual,click(NewDir,NewDist)),
@@ -245,9 +255,11 @@ mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
 mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T) :-
     mover_ficha(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T).
 
+% posicion_libre(+Dir,+Dist)
 posicion_libre(Dir,Dist) :-
     \+ clause(ficha(_,Dir,Dist),true).
 
+% posicion_adyacente(+Dir,+Dist,+Dir,+AdyDist,+T)
 posicion_adyacente(Dir,Dist,Dir,AdyDist,T) :-
     member(Dir,[w,e,n,s]),
     Dist is T+1,
@@ -280,5 +292,6 @@ posicion_adyacente(se,Dist,e,Dist,_).
 posicion_adyacente(sw,Dist,w,Dist,_).
 posicion_adyacente(sw,Dist,s,Dist,_).
 
+% posicion_ocupada(+Jugador,+Dir,+Dist)
 posicion_ocupada(Jugador,Dir,Dist) :-
     clause(ficha(Jugador,Dir,Dist),true).
