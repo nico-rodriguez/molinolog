@@ -5,7 +5,7 @@
 % El contenido de este archivo se puede modificar.
 
 % El predicado minimax_depth/1 define la recursión máxima a utilizar en el algoritmo minimax
-minimax_depth(3).
+minimax_depth(1).
 
 % molinolog(+JugadorNegro,+JugadorBlanco,+T)
 % JugadorNegtro y JugadorBlanco pueden ser los átomos humano o maquina.
@@ -432,50 +432,58 @@ elegir_movimiento(EstadoInicial, EstadoFinal,T,Turno) :-
     minimax_depth(Depth),
     elegir_movimiento_aux(PosiblesEstados,Turno,T,Depth,EstadoFinal,_).
 
-elegir_movimiento_aux([C],Turno,T,Depth,C,Max) :- minimax(C,Depth,max,Max,Turno,T).
+elegir_movimiento_aux([C],Turno,T,Depth,C,Max) :- 
+    contrincante(Turno,Contrincante),
+    minimax(C,Depth,min,Max,Turno,Contrincante,T).
 elegir_movimiento_aux([C|R],Turno,T,Depth,EstadoFinal,Max) :- 
     elegir_movimiento_aux(R,Turno,T,Depth,EstadoCandidato,Max1),
-    minimax(C,Depth,max,Max2,Turno,T),
+    contrincante(Turno,Contrincante),
+    minimax(C,Depth,min,Max2,Turno,Contrincante,T),
     (
         Max1>Max2 -> 
             EstadoFinal = EstadoCandidato, Max = Max1;
             EstadoFinal = C, Max = Max2
     ).
 
-minimax(Estado,0,_,Valor,Turno,_) :- 
-    evaluar_tablero(Turno,Estado,Valor).
-minimax(Estado,_,_,Valor,Turno,_) :-
+minimax(Estado,0,_,Valor,Jugador,_,_) :- evaluar_tablero(Jugador,Estado,Valor).
+minimax(Estado,_,_,Valor,Jugador,_,_) :-
     mover_fichas_restantes(Estado, blanco, CantidadFichas),
     CantidadFichas < 3,
-    evaluar_tablero(Turno,Estado,Valor).
-minimax(Estado,_,_,Valor,Turno,_) :-
+    evaluar_tablero(Jugador,Estado,Valor).
+minimax(Estado,_,_,Valor,Jugador,_,_) :-
     mover_fichas_restantes(Estado, negro, CantidadFichas),
     CantidadFichas < 3,
-    evaluar_tablero(Turno,Estado,Valor).
-minimax(Estado,Depth,max,Max,Turno,T) :- 
+    evaluar_tablero(Jugador,Estado,Valor).
+minimax(Estado,Depth,max,Max,Jugador,Turno,T) :- 
     Depth>0,
     posibles_estados(Estado,T,Turno,PosiblesEstados),
     Depth1 is Depth-1,
-    max_posibles_Estados(PosiblesEstados,Depth1,Turno,T,Max).
-minimax(Estado,Depth,min,Min,Turno,T) :- 
+    max_posibles_Estados(PosiblesEstados,Depth1,Jugador,Turno,T,Max).
+minimax(Estado,Depth,min,Min,Jugador,Turno,T) :- 
     Depth>0,
     posibles_estados(Estado,T,Turno,PosiblesEstados),
     Depth1 is Depth-1,
-    min_posibles_Estados(PosiblesEstados,Depth1,Turno,T,Min).
+    min_posibles_Estados(PosiblesEstados,Depth1,Jugador,Turno,T,Min).
 
-max_posibles_Estados([C],Depth,Turno,T,Max) :- minimax(C,Depth,min,Max,Turno,T).
-max_posibles_Estados([C|R],Depth,Turno,T,Max) :-
-    max_posibles_Estados(R,Depth,Turno,T,Max1),
-    minimax(C,Depth,min,Max2,Turno,T),
+max_posibles_Estados([C],Depth,Jugador,Turno,T,Max) :- 
+    contrincante(Turno,Contrincante),
+    minimax(C,Depth,min,Max,Jugador,Contrincante,T).
+max_posibles_Estados([C|R],Depth,Jugador,Turno,T,Max) :-
+    max_posibles_Estados(R,Depth,Jugador,Turno,T,Max1),
+    contrincante(Turno,Contrincante),
+    minimax(C,Depth,min,Max2,Jugador,Contrincante,T),
     (Max1>Max2 -> 
     	Max = Max1;
     	Max = Max2
     ).
 
-min_posibles_Estados([C],Depth,Turno,T,Min) :- minimax(C,Depth,max,Min,Turno,T).
-min_posibles_Estados([C|R],Depth,Turno,T,Min) :-
-    max_posibles_Estados(R,Depth,Turno,T,Min1),
-    minimax(C,Depth,max,Min2,Turno,T),
+min_posibles_Estados([C],Depth,Jugador,Turno,T,Min) :- 
+    contrincante(Turno,Contrincante),
+    minimax(C,Depth,max,Min,Jugador,Contrincante,T).
+min_posibles_Estados([C|R],Depth,Jugador,Turno,T,Min) :-
+    max_posibles_Estados(R,Depth,Jugador,Turno,T,Min1),
+    contrincante(Turno,Contrincante),
+    minimax(C,Depth,max,Min2,Contrincante,Turno,T),
     (Min1<Min2 -> 
     	Min = Min1;
     	Min = Min2
