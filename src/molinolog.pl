@@ -481,7 +481,7 @@ min_posibles_Estados([C],Depth,Jugador,Turno,T,Min) :-
     contrincante(Turno,Contrincante),
     minimax(C,Depth,max,Min,Jugador,Contrincante,T).
 min_posibles_Estados([C|R],Depth,Jugador,Turno,T,Min) :-
-    max_posibles_Estados(R,Depth,Jugador,Turno,T,Min1),
+    min_posibles_Estados(R,Depth,Jugador,Turno,T,Min1),
     contrincante(Turno,Contrincante),
     minimax(C,Depth,max,Min2,Contrincante,Turno,T),
     (Min1<Min2 -> 
