@@ -171,6 +171,7 @@ fichas_jugador_Aux(Turno,[_|R],FichasJugador) :- fichas_jugador_Aux(Turno,R,Fich
 % --------------------------
 
 loop(Visual,Turno,JugadorNegro,JugadorBlanco,T, Estado) :-
+    verificar_fin(Estado,Visual,JugadorNegro,JugadorBlanco,T),
     mensaje(Visual,Turno,Estado),
     ejecutar_turno(Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado).
 
@@ -210,7 +211,7 @@ evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
     !,
     gr_ficha(Visual,T,Dir,Dist,Turno),
     colocar_ficha(Estado,Turno,Dir,Dist,EstadoIntermedio),
-    chequear_molino(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T,EstadoIntermedio,EstadoFinal),
+    chequear_molino(Dir,Dist,Visual,Turno,T,EstadoIntermedio,EstadoFinal),
     contrincante(Turno,SiguienteTurno),
     loop(Visual,SiguienteTurno,JugadorNegro,JugadorBlanco,T,EstadoFinal).
 
@@ -226,7 +227,7 @@ evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
     existe_ficha(Estado,ficha(Turno,Dir,Dist)),
     !,
     (
-        mover_ficha(Visual,T,JugadorNegro,JugadorBlanco,Estado,Turno,Dir,Dist,EstadoFinal) -> true ; 
+        mover_ficha(Visual,T,Estado,Turno,Dir,Dist,EstadoFinal) -> true ; 
         fichas(Estado,Fichas),
         gr_dibujar_tablero(Visual,T,Fichas),
         loop(Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado)
@@ -267,7 +268,7 @@ posiciones_distintas((Dir1,Dist1),(Dir2,Dist2)) :- Dir1 \= Dir2, Dist1 \= Dist2.
 posiciones_distintas((Dir1,Dist),(Dir2,Dist)) :- Dir1 \= Dir2.
 posiciones_distintas((Dir,Dist1),(Dir,Dist2)) :- Dist1 \= Dist2.
 
-chequear_molino(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T,EstadoInicial,EstadoFinal) :-
+chequear_molino(Dir,Dist,Visual,Turno,T,EstadoInicial,EstadoFinal) :-
     findall([ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)],
             (member(ficha(Turno,Dir,Dist),[ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)]),molino(EstadoInicial,ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3),T)),
             MolinosNuevos),
@@ -277,9 +278,9 @@ chequear_molino(Dir,Dist,Visual,Turno,JugadorNegro,JugadorBlanco,T,EstadoInicial
     gr_ficha(Visual,T,Dir11,Dist11,'seleccion'),
     gr_ficha(Visual,T,Dir12,Dist12,'seleccion'),
     gr_ficha(Visual,T,Dir13,Dist13,'seleccion'),
-    capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T,EstadoInicial,EstadoFinal).
+    capturar_ficha(Visual,Turno,T,EstadoInicial,EstadoFinal).
 
-chequear_molino(Dir,Dist,_,Turno,_,_,T,Estado,Estado) :-
+chequear_molino(Dir,Dist,_,Turno,T,Estado,Estado) :-
     findall([ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)],
             (member(ficha(Turno,Dir,Dist),[ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)]),molino(Estado,ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3),T)),
             MolinosNuevos),
@@ -333,7 +334,7 @@ molino(Estado,ficha(Turno,ne,N),ficha(Turno,e,N),ficha(Turno,se,N),_) :-
     existe_ficha(Estado,ficha(Turno,e,N)),
     existe_ficha(Estado,ficha(Turno,se,N)).
 
-capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T,EstadoInicial,EstadoFinal) :-
+capturar_ficha(Visual,Turno,T,EstadoInicial,EstadoFinal) :-
     sformat(Msg,'Jugador ~w, capturar',[Turno]),
     gr_estado(Visual,Msg),
     gr_evento(Visual,click(Dir,Dist)),
@@ -347,21 +348,29 @@ capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T,EstadoInicial,EstadoFin
     !,
     quitar_ficha(EstadoInicial,Contrincante,Dir,Dist,EstadoFinal),
     fichas(EstadoFinal,Fichas),
-    gr_dibujar_tablero(Visual,T,Fichas),
-    mover_fichas_restantes(EstadoFinal, Contrincante, CantidadFichas),
-    verificar_fin(CantidadFichas,Turno,Visual,JugadorNegro,JugadorBlanco,T).
+    gr_dibujar_tablero(Visual,T,Fichas).
 
-capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T,EstadoInicial,EstadoFinal) :-
-    capturar_ficha(Visual,Turno,JugadorNegro,JugadorBlanco,T,EstadoInicial,EstadoFinal).
+capturar_ficha(Visual,Turno,T,EstadoInicial,EstadoFinal) :-
+    capturar_ficha(Visual,Turno,T,EstadoInicial,EstadoFinal).
 
-verificar_fin(2,Turno,Visual,JugadorNegro,JugadorBlanco,T):-
-    sformat(Msg, 'Ha ganado el jugador ~w, jugar nuevamente?', [Turno]),
-    (   gr_opciones(Visual, Msg, ['Sí', 'No'], 'Sí')
+verificar_fin(Estado,Visual,JugadorNegro,JugadorBlanco,T):-
+    mover_fichas_restantes(Estado, negro, CantidadFichas),
+    CantidadFichas < 3,
+    (   gr_opciones(Visual, 'Ha ganado el jugador blanco, jugar nuevamente?', ['Sí', 'No'], 'Sí')
 	->  % reiniciar el juego
         iniciar_juego(Visual,JugadorNegro,JugadorBlanco,T)
 	; halt
     ).
-verificar_fin(_,_,_,_,_,_).
+
+verificar_fin(Estado,Visual,JugadorNegro,JugadorBlanco,T):-
+    mover_fichas_restantes(Estado, blanco, CantidadFichas),
+    CantidadFichas < 3,
+    (   gr_opciones(Visual, 'Ha ganado el jugador negro, jugar nuevamente?', ['Sí', 'No'], 'Sí')
+	->  % reiniciar el juego
+        iniciar_juego(Visual,JugadorNegro,JugadorBlanco,T)
+	; halt
+    ).
+verificar_fin(_,_,_,_,_).
 
 % posicion_adyacente(+Dir,+Dist,+Dir,+AdyDist,+T)
 posicion_adyacente(Dir,Dist,Dir,AdyDist,T) :-
@@ -396,7 +405,7 @@ posicion_adyacente(se,Dist,e,Dist,_).
 posicion_adyacente(sw,Dist,w,Dist,_).
 posicion_adyacente(sw,Dist,s,Dist,_).
 
-mover_ficha(Visual,T,JugadorNegro,JugadorBlanco,EstadoInicial,Turno,Dir,Dist,EstadoFinal) :-
+mover_ficha(Visual,T,EstadoInicial,Turno,Dir,Dist,EstadoFinal) :-
     gr_ficha(Visual,T,Dir,Dist,'seleccion'),
     gr_evento(Visual,click(NewDir,NewDist)),
     ( posicion_adyacente(Dir,Dist,NewDir,NewDist,T)
@@ -413,7 +422,7 @@ mover_ficha(Visual,T,JugadorNegro,JugadorBlanco,EstadoInicial,Turno,Dir,Dist,Est
     correr_ficha(EstadoInicial,Turno,Dir,Dist,NewDir,NewDist,EstadoIntermedio),
     fichas(EstadoIntermedio,Fichas),
     gr_dibujar_tablero(Visual,T,Fichas),
-    chequear_molino(NewDir,NewDist,Visual,Turno,JugadorNegro,JugadorBlanco,T,EstadoIntermedio,EstadoFinal).
+    chequear_molino(NewDir,NewDist,Visual,Turno,T,EstadoIntermedio,EstadoFinal).
 
 % minimax_colocar(+T,+Turno,?Dir,?Dist) <- en un tablero de tamaño T, retorna la posicion (Dir y Dist) a colocar la ficha del jugador Turno
 minimax(EstadoInicial,T,Turno,EstadoFinal) :- 
@@ -424,7 +433,7 @@ minimax(EstadoInicial,T,Turno,EstadoFinal) :-
 
 minimax(EstadoInicial,T,Turno,EstadoFinal) :- 
     fase(EstadoInicial,mover),
-    fichas_jugador_mover(Turno,EstadoInicial,FichasJugador),
+    fichas_jugador_mover(T,Turno,EstadoInicial,FichasJugador),
     random_permutation(FichasJugador,FichasJugadorRdm), % Para que en caso de haber 2 jugadas que evaluando el tablero den el mismo valor, no siempre se elija la misma.
     max_mover(T,EstadoInicial,Turno,FichasJugadorRdm,EstadoFinal).
 
@@ -483,8 +492,8 @@ chequear_molino_maquina(Estado,Dir,Dist,Turno,T,N) :-
 
 max_mover(T,EstadoInicial,Turno,[C|R],EstadoFinal) :-
 	max_mover(T,EstadoInicial,Turno,R,EstadoIntermedio1),
-	arg(1,C,Dir),
-    arg(2,C,Dist),
+	arg(2,C,Dir),
+    arg(3,C,Dist),
     posiciones_adyacentes_libres(T,EstadoInicial,Dir,Dist,Pos),
     random_permutation(Pos,PosRdm), % Para que en caso de haber 2 jugadas que evaluando el tablero den el mismo valor, no siempre se elija la misma.
     max_mover_adyacentes(T,EstadoInicial,Turno,Dir,Dist,PosRdm,EstadoIntermedio2),
@@ -497,8 +506,8 @@ max_mover(T,EstadoInicial,Turno,[C|R],EstadoFinal) :-
 	).
 
 max_mover(T,EstadoInicial,Turno,[C],EstadoFinal) :- 
-    arg(1,C,Dir),
-    arg(2,C,Dist),
+    arg(2,C,Dir),
+    arg(3,C,Dist),
     posiciones_adyacentes_libres(T,EstadoInicial,Dir,Dist,Pos),
     random_permutation(Pos,PosRdm), % Para que en caso de haber 2 jugadas que evaluando el tablero den el mismo valor, no siempre se elija la misma.
     max_mover_adyacentes(T,EstadoInicial,Turno,Dir,Dist,PosRdm,EstadoFinal).
