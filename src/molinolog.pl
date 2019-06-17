@@ -183,15 +183,13 @@ ejecutar_turno(Visual,blanco,JugadorNegro,humano,T,Estado) :-
     evento(Evento,Visual,blanco,JugadorNegro,humano,T,Estado).
 
 ejecutar_turno(Visual,negro,maquina,JugadorBlanco,T,Estado) :-
-    fase(Estado,colocar),
-    minimax_colocar(Estado,T,negro,EstadoFinal),
+    minimax(Estado,T,negro,EstadoFinal),
     fichas(EstadoFinal,Fichas),
     gr_dibujar_tablero(Visual,T,Fichas),
     loop(Visual,blanco,maquina,JugadorBlanco,T,EstadoFinal).
 
 ejecutar_turno(Visual,blanco,JugadorNegro,maquina,T,Estado) :-
-    fase(Estado,colocar),
-    minimax_colocar(Estado,T,blanco,EstadoFinal),
+    minimax(Estado,T,blanco,EstadoFinal),
     fichas(EstadoFinal,Fichas),
     gr_dibujar_tablero(Visual,T,Fichas),
     loop(Visual,negro,JugadorNegro,maquina,T,EstadoFinal).
@@ -245,7 +243,6 @@ evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
     loop(Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado).
 
 evento(salir,Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
-    gr_mensaje(Visual,'Evento salir'),
     (   gr_opciones(Visual, '¿Seguro?', ['Sí', 'No'], 'Sí')
 	->  true
 	;   loop(Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado)
@@ -366,6 +363,7 @@ verificar_fin(2,Turno,Visual,JugadorNegro,JugadorBlanco,T):-
     ).
 verificar_fin(_,_,_,_,_,_).
 
+% posicion_adyacente(+Dir,+Dist,+Dir,+AdyDist,+T)
 posicion_adyacente(Dir,Dist,Dir,AdyDist,T) :-
     member(Dir,[w,e,n,s]),
     Dist is T+1,
@@ -418,16 +416,23 @@ mover_ficha(Visual,T,JugadorNegro,JugadorBlanco,EstadoInicial,Turno,Dir,Dist,Est
     chequear_molino(NewDir,NewDist,Visual,Turno,JugadorNegro,JugadorBlanco,T,EstadoIntermedio,EstadoFinal).
 
 % minimax_colocar(+T,+Turno,?Dir,?Dist) <- en un tablero de tamaño T, retorna la posicion (Dir y Dist) a colocar la ficha del jugador Turno
-minimax_colocar(EstadoInicial,T,Turno,EstadoFinal) :- 
+minimax(EstadoInicial,T,Turno,EstadoFinal) :- 
+    fase(EstadoInicial,colocar),
     posiciones_libres(T,EstadoInicial,Pos),
-    random_permutation(Pos,PosRdm), % Para que en caso de haber 2 jugadas que evaluando el tablero den el mismo valor, no siempre se elija la misma. Como se elije la primera, al permutar la lista de posiciones se logra lo comentado
+    random_permutation(Pos,PosRdm), % Para que en caso de haber 2 jugadas que evaluando el tablero den el mismo valor, no siempre se elija la misma.
     max_colocar(T,EstadoInicial,Turno,PosRdm,EstadoFinal).
+
+minimax(EstadoInicial,T,Turno,EstadoFinal) :- 
+    fase(EstadoInicial,mover),
+    fichas_jugador_mover(Turno,EstadoInicial,FichasJugador),
+    random_permutation(FichasJugador,FichasJugadorRdm), % Para que en caso de haber 2 jugadas que evaluando el tablero den el mismo valor, no siempre se elija la misma.
+    max_mover(T,EstadoInicial,Turno,FichasJugadorRdm,EstadoFinal).
 
 % posiciones_libres(+T,+Fichas,?Res) <- Res es la lista con las posiciones libres en el tablero de tamaño T dada una lista de fichas colocadas F
 posiciones_libres(T,Estado,R) :- findall((Dir,Dist),(posicion_valida(T,Dir,Dist), posicion_libre(Estado, Dir, Dist)),R).
 
 % posicion_valida(+T,?Dir,?Dist) <- La direccion Dir es valida y la distancia Dist son validos para un tablero de tamaño T
-posicion_valida(T,Dir,Dist) :- T>1, dist_valida(T,Dist), dir_valida(Dir).
+posicion_valida(T,Dir,Dist) :- T>0, dist_valida(T,Dist), dir_valida(Dir).
 
 % dist_valida(+T,?Dist) <- La distancia Dist es posible para un tablero de tamaño T
 dist_valida(T,Dist) :- H is T+1, dist_valida_aux(Dist, 1, H).
@@ -437,12 +442,8 @@ dist_valida_aux(Dist, D, H) :- D1 is D+1, D1 =< H, dist_valida_aux(Dist, D1, H).
 % dist_valida(?Dir) <- La direccion Dir es valida
 dir_valida(Dir) :- member(Dir,[nw,n,ne,w,e,sw,s,se]).
 
-% max_colocar(EstadoInicial,EstadoFinal)
-max_colocar(T,EstadoInicial,Turno,Pos,EstadoFinal) :- 
-    max_colocar_rec(T,EstadoInicial,Turno,Pos,EstadoFinal).
-
-max_colocar_rec(T,EstadoInicial,Turno,[C|R],EstadoFinal) :-
-	max_colocar_rec(T,EstadoInicial,Turno,R,EstadoIntermedio1),
+max_colocar(T,EstadoInicial,Turno,[C|R],EstadoFinal) :-
+	max_colocar(T,EstadoInicial,Turno,R,EstadoIntermedio1),
 	arg(1,C,Dir),
     arg(2,C,Dist),
     colocar_ficha(EstadoInicial,Turno,Dir,Dist,EstadoIntermedio2),
@@ -455,7 +456,7 @@ max_colocar_rec(T,EstadoInicial,Turno,[C|R],EstadoFinal) :-
 			EstadoFinal = EstadoIntermedio3
 	).
 
-max_colocar_rec(T,EstadoInicial,Turno,[C],EstadoFinal) :- 
+max_colocar(T,EstadoInicial,Turno,[C],EstadoFinal) :- 
     arg(1,C,Dir),
     arg(2,C,Dist),
     colocar_ficha(EstadoInicial,Turno,Dir,Dist,EstadoIntermedio),
@@ -480,9 +481,67 @@ chequear_molino_maquina(Estado,Dir,Dist,Turno,T,N) :-
             MolinosNuevos),
     length(MolinosNuevos,N).
 
-%max_molino(EstadoInicial,Turno,EstadoFinal) :- 
+max_mover(T,EstadoInicial,Turno,[C|R],EstadoFinal) :-
+	max_mover(T,EstadoInicial,Turno,R,EstadoIntermedio1),
+	arg(1,C,Dir),
+    arg(2,C,Dist),
+    posiciones_adyacentes_libres(T,EstadoInicial,Dir,Dist,Pos),
+    random_permutation(Pos,PosRdm), % Para que en caso de haber 2 jugadas que evaluando el tablero den el mismo valor, no siempre se elija la misma.
+    max_mover_adyacentes(T,EstadoInicial,Turno,Dir,Dist,PosRdm,EstadoIntermedio2),
+	evaluar_tablero(Turno,EstadoIntermedio1,Valor1),
+	evaluar_tablero(Turno,EstadoIntermedio2,Valor2),
+	(
+		Valor1 > Valor2 ->
+			EstadoFinal = EstadoIntermedio1;
+			EstadoFinal = EstadoIntermedio2
+	).
 
-% AGREGAR COMENTARIO
-%elegir_jugada(J,R) :- length(J,L), random(1,L,X), nth0(X,J,R).
+max_mover(T,EstadoInicial,Turno,[C],EstadoFinal) :- 
+    arg(1,C,Dir),
+    arg(2,C,Dist),
+    posiciones_adyacentes_libres(T,EstadoInicial,Dir,Dist,Pos),
+    random_permutation(Pos,PosRdm), % Para que en caso de haber 2 jugadas que evaluando el tablero den el mismo valor, no siempre se elija la misma.
+    max_mover_adyacentes(T,EstadoInicial,Turno,Dir,Dist,PosRdm,EstadoFinal).
 
+posiciones_adyacentes_libres(T,Estado,Dir,Dist,Res) :- findall((DirR,DistR),(posicion_adyacente(Dir,Dist,DirR,DistR,T),posicion_libre(Estado, DirR, DistR)),Res).
 
+max_mover_adyacentes(T,EstadoInicial,Turno,Dir,Dist,[C|R],EstadoFinal) :-
+	max_mover_adyacentes(T,EstadoInicial,Turno,Dir,Dist,R,EstadoIntermedio1),
+	arg(1,C,NewDir),
+    arg(2,C,NewDist),
+    correr_ficha(EstadoInicial,Turno,Dir,Dist,NewDir,NewDist,EstadoIntermedio2),
+    max_molino(EstadoIntermedio2,NewDir,NewDist,Turno,T,EstadoIntermedio3),
+	evaluar_tablero(Turno,EstadoIntermedio1,Valor1),
+	evaluar_tablero(Turno,EstadoIntermedio3,Valor2),
+	(
+		Valor1 > Valor2 ->
+			EstadoFinal = EstadoIntermedio1;
+			EstadoFinal = EstadoIntermedio3
+	).
+
+max_mover_adyacentes(T,EstadoInicial,Turno,Dir,Dist,[C],EstadoFinal) :- 
+    arg(1,C,NewDir),
+    arg(2,C,NewDist),
+    correr_ficha(EstadoInicial,Turno,Dir,Dist,NewDir,NewDist,EstadoIntermedio),
+    max_molino(EstadoIntermedio,NewDir,NewDist,Turno,T,EstadoFinal).
+
+fichas_jugador_mover(T,Turno,Estado,FichasJugadorMover) :- 
+    fichas_jugador(Turno,Estado,FichasJugador),
+    fichas_jugador_mover_aux(T,Estado,FichasJugador,FichasJugadorMover).
+   
+fichas_jugador_mover_aux(_,_,[],[]).
+fichas_jugador_mover_aux(T,Estado,[C|R],[C|FR]) :-
+    arg(2,C,Dir),
+    arg(3,C,Dist),
+    posiciones_adyacentes_libres(T,Estado,Dir,Dist,Pos),
+    length(Pos,N),
+    N>0,
+    fichas_jugador_mover_aux(T,Estado,R,FR).
+
+fichas_jugador_mover_aux(T,Estado,[C|R],FichasJugador) :-
+    arg(2,C,Dir),
+    arg(3,C,Dist),
+    posiciones_adyacentes_libres(T,Estado,Dir,Dist,Pos),
+    length(Pos,N),
+    N=0,
+    fichas_jugador_mover_aux(T,Estado,R,FichasJugador).
