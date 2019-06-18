@@ -522,7 +522,7 @@ min_posibles_Estados([C|R],Depth,Jugador,Turno,T,Min) :-
     	Min = Min2
     ).
 
-% min_posibles_Estados/6 <- +Estado, +T, +Turno, ?PosiblesEstados
+% posibles_estados/6 <- +Estado, +T, +Turno, ?PosiblesEstados
 % Instancia en PosiblesEstados una lista de todos los estados posibles a partir de todos los movimientos posibles para el jugador Turno dado el Estado
 % Se tiene en cuenta que si se forman molinos, la captura de una pieza del rival. Cada opción de captura agrega un estado más a PosiblesEstados
 posibles_estados(Estado,T,Turno,PosiblesEstados) :-
