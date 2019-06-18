@@ -5,10 +5,10 @@
 % El contenido de este archivo se puede modificar.
 
 % El predicado minimax_depth/1 define la recursión máxima a utilizar en el algoritmo minimax
-minimax_depth(1).
+minimax_depth(2).
 
-% molinolog(+JugadorNegro,+JugadorBlanco,+T)
-% JugadorNegtro y JugadorBlanco pueden ser los átomos humano o maquina.
+% molinolog/3 <- +JugadorNegro, +JugadorBlanco, +T
+% JugadorNegro y JugadorBlanco pueden ser los átomos humano o maquina.
 % T es el tamaño del tablero.
 molinolog(JugadorNegro,JugadorBlanco,T) :-
 	pce_image_directory(icons),
@@ -20,6 +20,7 @@ molinolog(JugadorNegro,JugadorBlanco,T) :-
     !,
     gr_destruir(Visual).
 
+% iniciar_juego/4 <- +Visual, +JugadorNegro, +JugadorBlanco, +T
 iniciar_juego(Visual,JugadorNegro,JugadorBlanco,T):-
     iniciar_estado(T,Estado),
     fichas(Estado,Fichas),
@@ -29,12 +30,12 @@ iniciar_juego(Visual,JugadorNegro,JugadorBlanco,T):-
 contrincante(negro,blanco).
 contrincante(blanco,negro).
 
-% inicializar_variables(+T,?E)/2
+% iniciar_estado/2 <- +T, ?E 
 % T es el tamaño del tablero.
 % E es el functor que representa un estado del juego.
 % Tiene aridad 6 con la forma estado(Fase,Fichas,FichasColocarNegro,FichasColocarBlanco,FichasMoverNegro,FichasMoverBlanco).
-% Fase en la que se esta (colocar o mover).
-% Fichas en el tablero. Lista con elementos de la forma (Turno, Dir, Dist).
+% Fase puede ser los átomos colocar o mover.
+% Fichas es una lista con todas las fichas en el tablero, cada elemento tiene la forma ficha(Turno, Dir, Dist).
 % FichasColocarNegro es el numero de fichas que le quedan por colocar al jugador negro (comienza en 3*(T+1)).
 % FichasColocarBlanco es el numero de fichas que le quedan por colocar al jugador blanco (comienza en 3*(T+1)).
 % FichasMoverNegro es el numero de fichas que le quedan por mover al jugador negro (comienza en 3*(T+1)).
@@ -49,13 +50,24 @@ iniciar_estado(T,E) :-
     arg(5,E,CantidadFichas),
     arg(6,E,CantidadFichas).
 
+% fase/2 <- +Estado, ?Fase
 fase(Estado,Fase) :- arg(1,Estado,Fase).
+
+% fichas/2 <- +Estado, ?Fichas
 fichas(Estado,Fichas) :- arg(2,Estado,Fichas).
+
+% colocar_fichas_restantes/3 <- +Estado, ?Jugador, ?CantidadDeFichas
+% Jugador puede ser los átomos humano o maquina.
 colocar_fichas_restantes(Estado, negro, CantidadFichas) :- arg(3,Estado,CantidadFichas).
 colocar_fichas_restantes(Estado, blanco, CantidadFichas) :- arg(4,Estado,CantidadFichas).
+
+% mover_fichas_restantes/3 <- +Estado, ?Jugador, ?CantidadDeFichas
+% Jugador puede ser los átomos humano o maquina.
 mover_fichas_restantes(Estado, negro, CantidadFichas) :- arg(5,Estado,CantidadFichas).
 mover_fichas_restantes(Estado, blanco, CantidadFichas) :- arg(6,Estado,CantidadFichas).
 
+% colocar_ficha/5 <- +EstadoInicial, +Jugador, +Dir, +Dist, ?EstadoFinal
+% EstadoFinal es el resultado de colocar una ficha en la posición (Dir,Dist) en el tablero representado por EstadoInicial para el jugador Jugador
 colocar_ficha(EstadoInicial,negro,Dir,Dist,EstadoFinal) :- 
     fichas(EstadoInicial, Fichas),
     colocar_fichas_restantes(EstadoInicial, negro, CantidadFichasColocarNegro),
@@ -72,7 +84,6 @@ colocar_ficha(EstadoInicial,negro,Dir,Dist,EstadoFinal) :-
     arg(4,EstadoFinal,CantidadFichasColocarBlanco),
     arg(5,EstadoFinal,CantidadFichasMoverNegro),
     arg(6,EstadoFinal,CantidadFichasMoverBlanco).
-
 colocar_ficha(EstadoInicial,blanco,Dir,Dist,EstadoFinal) :- 
     fichas(EstadoInicial, Fichas),
     colocar_fichas_restantes(EstadoInicial, negro, CantidadFichasColocarNegro),
@@ -89,11 +100,17 @@ colocar_ficha(EstadoInicial,blanco,Dir,Dist,EstadoFinal) :-
     arg(5,EstadoFinal,CantidadFichasMoverNegro),
     arg(6,EstadoFinal,CantidadFichasMoverBlanco).
 
+% siguiente_fase/3 <- +CantidadFichasColocarNegro, +CantidadFichasColocarBlanco, ?Fase
+% Si no restan fichas por colocar, la siguiente fase es mover.
 siguiente_fase(0,0,mover):-!.
 siguiente_fase(_,_,colocar).
 
+% colocar_ficha/5 <- +Estado, +Ficha
+% evalua si Ficha existe en el tablero representado por Estado
 existe_ficha(Estado,ficha(Turno,Dir,Dist)) :- fichas(Estado,Fichas), member(ficha(Turno,Dir,Dist),Fichas). 
 
+% quitar_ficha/5 <- +EstadoInicial, +Jugador, +Dir, +Dist, ?EstadoFinal
+% EstadoFinal es el resultado de quitar una ficha en la posición (Dir,Dist) en el tablero representado por EstadoInicial para el jugador Jugador
 quitar_ficha(EstadoInicial,negro,Dir,Dist,EstadoFinal) :- 
     existe_ficha(EstadoInicial,ficha(negro,Dir,Dist)),
     fase(EstadoInicial,Fase),
@@ -111,7 +128,6 @@ quitar_ficha(EstadoInicial,negro,Dir,Dist,EstadoFinal) :-
     arg(4,EstadoFinal,CantidadFichasColocarBlanco),
     arg(5,EstadoFinal,CantidadFichasMoverNegroFinal),
     arg(6,EstadoFinal,CantidadFichasMoverBlanco).
-
 quitar_ficha(EstadoInicial,blanco,Dir,Dist,EstadoFinal) :- 
     existe_ficha(EstadoInicial,ficha(blanco,Dir,Dist)),
     fase(EstadoInicial,Fase),
@@ -130,6 +146,8 @@ quitar_ficha(EstadoInicial,blanco,Dir,Dist,EstadoFinal) :-
     arg(5,EstadoFinal,CantidadFichasMoverNegro),
     arg(6,EstadoFinal,CantidadFichasMoverBlancoFinal).
 
+% correr_ficha/7 <- +EstadoInicial, +Jugador, +Dir, +Dist, ?EstadoFinal
+% EstadoFinal es el resultado de mover una ficha de la posición (Dir,Dist) a la posición (NewDir,NewDist) en el tablero representado por EstadoInicial para el jugador Jugador
 correr_ficha(EstadoInicial,Turno,Dir,Dist,NewDir,NewDist,EstadoFinal) :- 
     existe_ficha(EstadoInicial,ficha(Turno,Dir,Dist)),
     fase(EstadoInicial,mover),
@@ -147,54 +165,56 @@ correr_ficha(EstadoInicial,Turno,Dir,Dist,NewDir,NewDist,EstadoFinal) :-
     arg(5,EstadoFinal,CantidadFichasMoverNegro),
     arg(6,EstadoFinal,CantidadFichasMoverBlanco).
 
+% evaluar_tablero/3 <- ?Jugador, +Estado, ?Valor
+% Valor es el resultado de evaluar el tablero representado por Estado para el jugador Jugador.
+% La evaluación es fichas restantes del jugador menos las fichas restantes del contrincante
 evaluar_tablero(negro,Estado,Valor) :- 
     mover_fichas_restantes(Estado, negro, CantidadFichasMoverNegro),
     mover_fichas_restantes(Estado, blanco, CantidadFichasMoverBlanco),
     Valor is CantidadFichasMoverNegro-CantidadFichasMoverBlanco.
-
 evaluar_tablero(blanco,Estado,Valor) :- 
     mover_fichas_restantes(Estado, negro, CantidadFichasMoverNegro),
     mover_fichas_restantes(Estado, blanco, CantidadFichasMoverBlanco),
     Valor is CantidadFichasMoverBlanco-CantidadFichasMoverNegro.
 
+% fichas_jugador/3 <- +Turno, +Estado, ?FichasJugador
+% FichasJugador es la lista de fichas de Estado filtradas por el jugador Turno
 fichas_jugador(Turno,Estado,FichasJugador) :- 
     fichas(Estado,Fichas),
     fichas_jugador_Aux(Turno,Fichas,FichasJugador).
-
 fichas_jugador_Aux(_,[],[]).
 fichas_jugador_Aux(Turno,[C|R],[C|Y]) :- arg(1,C,Turno), fichas_jugador_Aux(Turno,R,Y),!.
 fichas_jugador_Aux(Turno,[_|R],FichasJugador) :- fichas_jugador_Aux(Turno,R,FichasJugador).
-
 
 % --------------------------
 % Loop principal
 % --------------------------
 
+% loop/6 <- +Visual, +Turno, +JugadorNegro, +JugadorBlanco, +T, +Estado
 loop(Visual,Turno,JugadorNegro,JugadorBlanco,T, Estado) :-
     verificar_fin(Estado,Visual,JugadorNegro,JugadorBlanco,T),
     mensaje(Visual,Turno,Estado),
     ejecutar_turno(Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado).
 
+% ejecutar_turno/6 <- +Visual, +Turno, +JugadorNegro, +JugadorBlanco, +T, +Estado
 ejecutar_turno(Visual,negro,humano,JugadorBlanco,T,Estado) :-
     gr_evento(Visual,Evento),
     evento(Evento,Visual,negro,humano,JugadorBlanco,T,Estado).
-
 ejecutar_turno(Visual,blanco,JugadorNegro,humano,T,Estado) :-
     gr_evento(Visual,Evento),
     evento(Evento,Visual,blanco,JugadorNegro,humano,T,Estado).
-
 ejecutar_turno(Visual,negro,maquina,JugadorBlanco,T,Estado) :-
     elegir_movimiento(Estado, EstadoFinal,T,negro),
     fichas(EstadoFinal,Fichas),
     gr_dibujar_tablero(Visual,T,Fichas),
     loop(Visual,blanco,maquina,JugadorBlanco,T,EstadoFinal).
-
 ejecutar_turno(Visual,blanco,JugadorNegro,maquina,T,Estado) :-
     elegir_movimiento(Estado, EstadoFinal,T,blanco),
     fichas(EstadoFinal,Fichas),
     gr_dibujar_tablero(Visual,T,Fichas),
     loop(Visual,negro,JugadorNegro,maquina,T,EstadoFinal).
 
+% mensaje/3 <- +Visual, +Turno, +Estado
 mensaje(Visual,Turno,Estado) :-
     fase(Estado,colocar),
     colocar_fichas_restantes(Estado,Turno,Cantidad),
@@ -205,6 +225,7 @@ mensaje(Visual,Turno,Estado) :-
     sformat(Msg, 'Jugador ~w, mover', [Turno]),
     gr_estado(Visual, Msg).
 
+% evento/7 <- +Evento, +Visual, +Turno, +JugadorNegro, +JugadorBlanco, +T, +Estado
 evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
     fase(Estado,colocar),
     posicion_libre(Estado,Dir,Dist),
@@ -214,14 +235,12 @@ evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
     chequear_molino(Dir,Dist,Visual,Turno,T,EstadoIntermedio,EstadoFinal),
     contrincante(Turno,SiguienteTurno),
     loop(Visual,SiguienteTurno,JugadorNegro,JugadorBlanco,T,EstadoFinal).
-
 evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
     fase(Estado,colocar),
     \+ posicion_libre(Estado,Dir,Dist),
     !,
     gr_mensaje(Visual,'Posicion ocupada, seleccione otra.'),
     loop(Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado).
-
 evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
     fase(Estado,mover),
     existe_ficha(Estado,ficha(Turno,Dir,Dist)),
@@ -234,7 +253,6 @@ evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
     ),
     contrincante(Turno,SiguienteTurno),
     loop(Visual,SiguienteTurno,JugadorNegro,JugadorBlanco,T,EstadoFinal).
-
 evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
     fase(Estado,mover),
     \+ existe_ficha(Estado,ficha(Turno,Dir,Dist)),
@@ -242,13 +260,11 @@ evento(click(Dir,Dist),Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
     sformat(Msg, 'Debes elegir una ficha color ~w.', [Turno]),
     gr_mensaje(Visual,Msg),
     loop(Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado).
-
 evento(salir,Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
     (   gr_opciones(Visual, '¿Seguro?', ['Sí', 'No'], 'Sí')
 	->  true
 	;   loop(Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado)
 	).
-
 evento(reiniciar,Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
     (   gr_opciones(Visual, '¿Seguro?', ['Sí', 'No'], 'Sí')
 	->  % reiniciar el juego
@@ -256,6 +272,8 @@ evento(reiniciar,Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado) :-
 	;   loop(Visual,Turno,JugadorNegro,JugadorBlanco,T,Estado)
 	).
 
+% posicion_libre/3 <- +Estado, +Dir, +Dist
+% indica si la posición (Dir,Dist) esta libre en el tablero representado por Estado
 posicion_libre(Estado, Dir, Dist) :- fichas(Estado,Fichas), posicion_libre_aux(Fichas,Dir,Dist).
 posicion_libre_aux([],_,_).
 posicion_libre_aux([C|R],Dir,Dist) :- 
@@ -264,10 +282,15 @@ posicion_libre_aux([C|R],Dir,Dist) :-
     posiciones_distintas((Dir1,Dist1),(Dir,Dist)),
     posicion_libre_aux(R,Dir,Dist).
 
+% posiciones_distintas/2 <- +Pos1, +Pos2
+% indica si Pos1 es distinta a Pos2
 posiciones_distintas((Dir1,Dist1),(Dir2,Dist2)) :- Dir1 \= Dir2, Dist1 \= Dist2.
 posiciones_distintas((Dir1,Dist),(Dir2,Dist)) :- Dir1 \= Dir2.
 posiciones_distintas((Dir,Dist1),(Dir,Dist2)) :- Dist1 \= Dist2.
 
+% chequear_molino/7 <- +Dir, +Dist, +Visual, +Turno, +T, +EstadoIncial, ?EstadoFinal
+% chequea si la colocación de una ficha en la posición (Dir,Dist) generó un nuevo molino, y en caso afirmativo delega al usuario el seleccionar que ficha del oponente capturar
+% EstadoFinal es instanciado con el resultado de la selección del usuario de que ficha del oponente capturar, en caso de que haya molinos nuevos, y sino es igual a EstadoInicial
 chequear_molino(Dir,Dist,Visual,Turno,T,EstadoInicial,EstadoFinal) :-
     findall([ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)],
             (member(ficha(Turno,Dir,Dist),[ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)]),molino(EstadoInicial,ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3),T)),
@@ -279,7 +302,6 @@ chequear_molino(Dir,Dist,Visual,Turno,T,EstadoInicial,EstadoFinal) :-
     gr_ficha(Visual,T,Dir12,Dist12,'seleccion'),
     gr_ficha(Visual,T,Dir13,Dist13,'seleccion'),
     capturar_ficha(Visual,Turno,T,EstadoInicial,EstadoFinal).
-
 chequear_molino(Dir,Dist,_,Turno,T,Estado,Estado) :-
     findall([ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)],
             (member(ficha(Turno,Dir,Dist),[ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)]),molino(Estado,ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3),T)),
@@ -287,6 +309,7 @@ chequear_molino(Dir,Dist,_,Turno,T,Estado,Estado) :-
     length(MolinosNuevos,N),
     N=0.
 
+% molino/5 <- +Estado, +Ficha1, +Ficha2, +Ficha3, +T
 % Molinos horizontales
 molino(Estado,ficha(Turno,nw,N),ficha(Turno,n,N),ficha(Turno,ne,N),_) :-
     existe_ficha(Estado,ficha(Turno,nw,N)),
@@ -334,6 +357,9 @@ molino(Estado,ficha(Turno,ne,N),ficha(Turno,e,N),ficha(Turno,se,N),_) :-
     existe_ficha(Estado,ficha(Turno,e,N)),
     existe_ficha(Estado,ficha(Turno,se,N)).
 
+% capturar_ficha/5 <- +Visual, +Turno, +T, +EstadoIncial, ?EstadoFinal
+% permite al usuario capturar una ficha del oponente en caso de que formo un molino
+% se chequea que la posición seleccionada tenga una ficha del oponente
 capturar_ficha(Visual,Turno,T,EstadoInicial,EstadoFinal) :-
     sformat(Msg,'Jugador ~w, capturar',[Turno]),
     gr_estado(Visual,Msg),
@@ -349,10 +375,11 @@ capturar_ficha(Visual,Turno,T,EstadoInicial,EstadoFinal) :-
     quitar_ficha(EstadoInicial,Contrincante,Dir,Dist,EstadoFinal),
     fichas(EstadoFinal,Fichas),
     gr_dibujar_tablero(Visual,T,Fichas).
-
 capturar_ficha(Visual,Turno,T,EstadoInicial,EstadoFinal) :-
     capturar_ficha(Visual,Turno,T,EstadoInicial,EstadoFinal).
 
+% capturar_ficha/5 <- +Visual, +Turno, +T, +EstadoIncial, ?EstadoFinal
+% verifica si Estado representa un juego que ha finalizado. En caso de que sí, se muestra una notificación indicando quien gano y se pregunta si se quiere repetir la partida
 verificar_fin(Estado,Visual,JugadorNegro,JugadorBlanco,T):-
     mover_fichas_restantes(Estado, negro, CantidadFichas),
     CantidadFichas < 3,
@@ -361,7 +388,6 @@ verificar_fin(Estado,Visual,JugadorNegro,JugadorBlanco,T):-
         iniciar_juego(Visual,JugadorNegro,JugadorBlanco,T)
 	; halt
     ).
-
 verificar_fin(Estado,Visual,JugadorNegro,JugadorBlanco,T):-
     mover_fichas_restantes(Estado, blanco, CantidadFichas),
     CantidadFichas < 3,
@@ -372,7 +398,7 @@ verificar_fin(Estado,Visual,JugadorNegro,JugadorBlanco,T):-
     ).
 verificar_fin(_,_,_,_,_).
 
-% posicion_adyacente(+Dir,+Dist,+Dir,+AdyDist,+T)
+% posicion_adyacente/5 <- +Dir, +Dist, +DirAdy, +DistAdy, +T
 posicion_adyacente(Dir,Dist,Dir,AdyDist,T) :-
     member(Dir,[w,e,n,s]),
     Dist is T+1,
@@ -405,6 +431,10 @@ posicion_adyacente(se,Dist,e,Dist,_).
 posicion_adyacente(sw,Dist,w,Dist,_).
 posicion_adyacente(sw,Dist,s,Dist,_).
 
+% mover_ficha/5 <- +Visual, +T, +EstadoIncial, +Turno, +Dir, +Dist, ?EstadoFinal
+% permite al usuario mover una ficha una posición adyacente
+% se chequea que la posición seleccionada origen tenga una ficha del jugador y que la posicion destino sea adyacente y este libre
+% tambien se chequea si el movimiento genero un molino, y en caso afirmativo se le permite al usuario elegir una ficha del oponente para capturar
 mover_ficha(Visual,T,EstadoInicial,Turno,Dir,Dist,EstadoFinal) :-
     gr_ficha(Visual,T,Dir,Dist,'seleccion'),
     gr_evento(Visual,click(NewDir,NewDist)),
@@ -424,14 +454,12 @@ mover_ficha(Visual,T,EstadoInicial,Turno,Dir,Dist,EstadoFinal) :-
     gr_dibujar_tablero(Visual,T,Fichas),
     chequear_molino(NewDir,NewDist,Visual,Turno,T,EstadoIntermedio,EstadoFinal).
 
-
-%---------------------------------------------------------------------
-
+% elegir_movimiento/4 <- +EstadoIncial, ?EstadoFinal, +Turno, +T
+% se instancia en EstadoFinal el resultado de elegir una jugada aplicando minimax para todos los posibles movimientos de la maquina
 elegir_movimiento(EstadoInicial, EstadoFinal,T,Turno) :-
     posibles_estados(EstadoInicial,T,Turno,PosiblesEstados),
     minimax_depth(Depth),
     elegir_movimiento_aux(PosiblesEstados,Turno,T,Depth,EstadoFinal,_).
-
 elegir_movimiento_aux([C],Turno,T,Depth,C,Max) :- 
     contrincante(Turno,Contrincante),
     minimax(C,Depth,min,Max,Turno,Contrincante,T).
@@ -445,6 +473,7 @@ elegir_movimiento_aux([C|R],Turno,T,Depth,EstadoFinal,Max) :-
             EstadoFinal = C, Max = Max2
     ).
 
+% minimax/7 <- +Estado, +Depth, +Fase (min o max), +Jugador, +Turno, +T
 minimax(Estado,0,_,Valor,Jugador,_,_) :- evaluar_tablero(Jugador,Estado,Valor).
 minimax(Estado,_,_,Valor,Jugador,_,_) :-
     mover_fichas_restantes(Estado, blanco, CantidadFichas),
@@ -465,6 +494,8 @@ minimax(Estado,Depth,min,Min,Jugador,Turno,T) :-
     Depth1 is Depth-1,
     min_posibles_Estados(PosiblesEstados,Depth1,Jugador,Turno,T,Min).
 
+% max_posibles_Estados/6 <- +EstadosPosibles, +Depth, +Jugador, +Turno, +T, ?ValorMaximo
+% Instancia en ValorMaximo el maximo valor de la evaluación de todos los posibles estados
 max_posibles_Estados([C],Depth,Jugador,Turno,T,Max) :- 
     contrincante(Turno,Contrincante),
     minimax(C,Depth,min,Max,Jugador,Contrincante,T).
@@ -477,6 +508,8 @@ max_posibles_Estados([C|R],Depth,Jugador,Turno,T,Max) :-
     	Max = Max2
     ).
 
+% min_posibles_Estados/6 <- +EstadosPosibles, +Depth, +Jugador, +Turno, +T, ?ValorMinimo
+% Instancia en ValorMinimo el minimo valor de la evaluación de todos los posibles estados
 min_posibles_Estados([C],Depth,Jugador,Turno,T,Min) :- 
     contrincante(Turno,Contrincante),
     minimax(C,Depth,max,Min,Jugador,Contrincante,T).
@@ -489,12 +522,14 @@ min_posibles_Estados([C|R],Depth,Jugador,Turno,T,Min) :-
     	Min = Min2
     ).
 
+% min_posibles_Estados/6 <- +Estado, +T, +Turno, ?PosiblesEstados
+% Instancia en PosiblesEstados una lista de todos los estados posibles a partir de todos los movimientos posibles para el jugador Turno dado el Estado
+% Se tiene en cuenta que si se forman molinos, la captura de una pieza del rival. Cada opción de captura agrega un estado más a PosiblesEstados
 posibles_estados(Estado,T,Turno,PosiblesEstados) :-
     fase(Estado,colocar),
     posiciones_libres(T,Estado,Pos),
     random_permutation(Pos,PosRdm), % Para que en caso de haber 2 jugadas que evaluando el tablero den el mismo valor, no siempre se elija la misma.
     posibles_estados_colocar(Estado,PosRdm,T,Turno,PosiblesEstados).
-
 posibles_estados(Estado,T,Turno,PosiblesEstados) :-
     fase(Estado,mover),
   	fichas_jugador_mover(T,Turno,Estado,FichasJugador),
@@ -559,28 +594,38 @@ posibles_estados_mover_adyacentes(Estado,Dir,Dist,[C|R],T,Turno,EstadosPosibles)
     posibles_estados_mover_adyacentes(Estado,Dir,Dist,R,T,Turno,Er),
     append(Em, Er, EstadosPosibles).
 
-% posiciones_libres(+T,+Fichas,?Res) <- Res es la lista con las posiciones libres en el tablero de tamaño T dada una lista de fichas colocadas F
+% posiciones_libres/3 <- +T, +Fichas, ?Res
+% Res es la lista con las posiciones libres en el tablero de tamaño T dada una lista de fichas colocadas F
 posiciones_libres(T,Estado,R) :- findall((Dir,Dist),(posicion_valida(T,Dir,Dist), posicion_libre(Estado, Dir, Dist)),R).
 
-% posicion_valida(+T,?Dir,?Dist) <- La direccion Dir es valida y la distancia Dist son validos para un tablero de tamaño T
+% posicion_valida/3 <- +T, ?Dir, ?Dist
+% La direccion Dir es valida y la distancia Dist son validos para un tablero de tamaño T
 posicion_valida(T,Dir,Dist) :- T>0, dist_valida(T,Dist), dir_valida(Dir).
 
-% dist_valida(+T,?Dist) <- La distancia Dist es posible para un tablero de tamaño T
+% dist_valida/2 <- +T, ?Dist
+% La distancia Dist es posible para un tablero de tamaño T
 dist_valida(T,Dist) :- H is T+1, dist_valida_aux(Dist, 1, H).
 dist_valida_aux(D, D, _).
 dist_valida_aux(Dist, D, H) :- D1 is D+1, D1 =< H, dist_valida_aux(Dist, D1, H).
 
-% dist_valida(?Dir) <- La direccion Dir es valida
+% dist_valida/1 <- ?Dir
+% La direccion Dir es valida
 dir_valida(Dir) :- member(Dir,[nw,n,ne,w,e,sw,s,se]).
 
+% La distancia Dist es posible para un tablero de tamaño T
 chequear_molino_maquina(Estado,Dir,Dist,Turno,T,N) :-
     findall([ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)],
             (member(ficha(Turno,Dir,Dist),[ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3)]),molino(Estado,ficha(Turno,Dir1,Dist1),ficha(Turno,Dir2,Dist2),ficha(Turno,Dir3,Dist3),T)),
             MolinosNuevos),
     length(MolinosNuevos,N).
 
+% posiciones_adyacentes_libres/4 <- +T, +Estado, +Dir, +Dist, ?Res
+% Instancia en Res todas las posiciones adyacentes a (Dir,Dist) que están libres en el tablero representado por Estado
 posiciones_adyacentes_libres(T,Estado,Dir,Dist,Res) :- findall((DirR,DistR),(posicion_adyacente(Dir,Dist,DirR,DistR,T),posicion_libre(Estado, DirR, DistR)),Res).
 
+% fichas_jugador_mover/4 <- +T, +Turno, +Estado, ?FichasJugadorMover
+% Instancia en FichasJugadorMover todas las fichas que el jugaodr Turno puede mover
+% No puede mover sus fichas que no tengan posiciones adyacentes libres
 fichas_jugador_mover(T,Turno,Estado,FichasJugadorMover) :- 
     fichas_jugador(Turno,Estado,FichasJugador),
     fichas_jugador_mover_aux(T,Estado,FichasJugador,FichasJugadorMover).
