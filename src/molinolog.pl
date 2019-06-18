@@ -105,7 +105,7 @@ colocar_ficha(EstadoInicial,blanco,Dir,Dist,EstadoFinal) :-
 siguiente_fase(0,0,mover):-!.
 siguiente_fase(_,_,colocar).
 
-% colocar_ficha/5 <- +Estado, +Ficha
+% existe_ficha/2 <- +Estado, +Ficha
 % evalua si Ficha existe en el tablero representado por Estado
 existe_ficha(Estado,ficha(Turno,Dir,Dist)) :- fichas(Estado,Fichas), member(ficha(Turno,Dir,Dist),Fichas). 
 
@@ -378,7 +378,7 @@ capturar_ficha(Visual,Turno,T,EstadoInicial,EstadoFinal) :-
 capturar_ficha(Visual,Turno,T,EstadoInicial,EstadoFinal) :-
     capturar_ficha(Visual,Turno,T,EstadoInicial,EstadoFinal).
 
-% capturar_ficha/5 <- +Visual, +Turno, +T, +EstadoIncial, ?EstadoFinal
+% verificar_fin/5 <- +Visual, +Turno, +T, +EstadoIncial, ?EstadoFinal
 % verifica si Estado representa un juego que ha finalizado. En caso de que sí, se muestra una notificación indicando quien gano y se pregunta si se quiere repetir la partida
 verificar_fin(Estado,Visual,JugadorNegro,JugadorBlanco,T):-
     mover_fichas_restantes(Estado, negro, CantidadFichas),
